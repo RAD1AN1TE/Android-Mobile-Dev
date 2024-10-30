@@ -7,5 +7,8 @@
         <item>Irvine</item>
         <item>Chicago</item>
     </string-array>
+
+    <string name="timer_b_label">Total Time:</string>
+    <string name="timer_a_label">Foreground Time:</string>
 </resources>
 

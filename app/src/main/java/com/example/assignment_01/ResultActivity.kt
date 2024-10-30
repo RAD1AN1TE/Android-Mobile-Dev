@@ -11,7 +11,6 @@ import androidx.appcompat.app.AppCompatActivity
 
 class ResultActivity : AppCompatActivity() {
 
-    // Keys for SharedPreferences
     companion object {
         private const val PREFS_NAME = "QuizResults"
         private const val PASS_COUNT_KEY = "passCount"
@@ -61,14 +60,14 @@ class ResultActivity : AppCompatActivity() {
     private fun shareQuizResults(passCount: Int, failCount: Int) {
         val message = "Quiz Results:\nPassed: $passCount times\nFailed: $failCount times"
 
-        // Create ACTION_SEND intent
+        // Create ACTION_SEND
         val sendIntent = Intent().apply {
             action = Intent.ACTION_SEND
             putExtra(Intent.EXTRA_TEXT, message)
             type = "text/plain"
         }
 
-        // Create ACTION_CHOOSER intent
+        // Create ACTION_CHOOSER
         val chooser = Intent.createChooser(sendIntent, "Share your quiz results via")
 
         if (sendIntent.resolveActivity(packageManager) != null) {
