@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Assignment_01</string>
+
+    <string-array name="locations">
+        <item>New York</item>
+        <item>Atlanta</item>
+        <item>Irvine</item>
+        <item>Chicago</item>
+    </string-array>
+</resources>
+
