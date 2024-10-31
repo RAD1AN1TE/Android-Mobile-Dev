@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/configuration_scroll_view"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:id="@+id/configuration_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="15dp"
+        android:orientation="vertical">
+
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp">
+
+            <TextView
+                android:id="@+id/timer_a_toggle_label"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="@string/enable_timer_a"
+                android:layout_weight="1"
+                android:textSize="16sp"/>
+
+            <Switch
+                android:id="@+id/timer_a_switch"
+                android:layout_width="74dp"
+                android:layout_height="52dp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp">
+
+            <TextView
+                android:id="@+id/timer_b_toggle_label"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="@string/enable_timer_b"
+                android:layout_weight="1"
+                android:textSize="16sp"/>
+
+            <Switch
+                android:id="@+id/timer_b_switch"
+                android:layout_width="74dp"
+                android:layout_height="51dp" />
+        </LinearLayout>
+
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp">
+
+            <TextView
+                android:id="@+id/time_limit_label"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="@string/time_limit"
+                android:layout_weight="1"
+                android:textSize="16sp"/>
+
+            <EditText
+                android:id="@+id/time_limit_input"
+                android:layout_width="125dp"
+                android:layout_height="59dp"
+                android:ems="4"
+                android:hint="@string/_30"
+                android:inputType="number" />
+        </LinearLayout>
+
+
+        <TextView
+            android:id="@+id/button_type_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/button_type"
+            android:textSize="16sp"
+            android:paddingTop="16dp"
+            android:paddingBottom="8dp"/>
+
+        <RadioGroup
+            android:id="@+id/button_type_radio_group"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <RadioButton
+                android:id="@+id/image_button_radio"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/image_button" />
+
+            <RadioButton
+                android:id="@+id/default_button_radio"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/default_button" />
+        </RadioGroup>
+
+
+        <Button
+            android:id="@+id/save_settings_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/save_settings"
+            android:layout_marginTop="24dp"/>
+    </LinearLayout>
+</ScrollView>

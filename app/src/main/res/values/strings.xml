@@ -1,6 +1,9 @@
 <resources>
     <string name="app_name">Assignment_01</string>
 
+    <string name="question_1">Where is University of California, Irine?</string>
+    <string name="question_2">Where is New York University?</string>
+
     <string-array name="locations">
         <item>New York</item>
         <item>Atlanta</item>
@@ -8,7 +11,28 @@
         <item>Chicago</item>
     </string-array>
 
-    <string name="timer_b_label">Total Time:</string>
     <string name="timer_a_label">Foreground Time:</string>
+    <string name="timer_b_label">Total Time:</string>
+
+    <string name="configuration">Configuration</string>
+    <string name="enable_timer_a">Enable Foreground Timer</string>
+    <string name="enable_timer_b">Enable Total Timer</string>
+    <string name="time_limit">Set Time Limit (seconds):</string>
+    <string name="button_type">Choose Button Type:</string>
+    <string name="image_button">Image Button</string>
+    <string name="default_button">Default Button</string>
+    <string name="save_settings">Save Settings</string>
+    <string name="submit">Submit</string>
+    <string name="_30">30</string>
+    <string name="submit_answer">Submit Answer</string>
+    <string name="_00_00">00:00</string>
+    <string name="fib_question">Fill in the blank: There are ____ states in USA.</string>
+    <string name="fib_hint">Enter number</string>
+    <string name="results">Results</string>
+    <string name="passed_x_times_nfailed_y_times">Passed: X times\nFailed: Y times</string>
+    <string name="share_results">Share Results</string>
+    <string name="settings">Settings</string>
+    <string name="timer_remaining_label">Time Remaining</string>
+
 </resources>
 
