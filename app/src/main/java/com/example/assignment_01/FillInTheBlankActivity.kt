@@ -7,12 +7,16 @@ import android.os.Bundle
 import android.os.CountDownTimer
 import android.os.Handler
 import android.os.Looper
-import android.widget.*
+import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatActivity
 import com.example.assignment_01.databinding.ActivityFibBinding
 import java.util.concurrent.TimeUnit
 
-class FillInTheBlankActivity : Activity() {
+class FillInTheBlankActivity : AppCompatActivity() {
 
+    // Existing variables
     private var attemptsLeft = 2
     private val correctAnswer = "50"
     private lateinit var binding: ActivityFibBinding
@@ -32,7 +36,12 @@ class FillInTheBlankActivity : Activity() {
 
     private var countDownTimer: CountDownTimer? = null
     private var timeLeftInMillis: Long = 0
+
+    // New variable to track if settings were saved
     private var cameFromSettings = false
+
+    // Define the ActivityResultLauncher
+    private lateinit var configActivityResultLauncher: ActivityResultLauncher<Intent>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,19 +51,36 @@ class FillInTheBlankActivity : Activity() {
         sharedPrefs = getSharedPreferences("AppSettings", MODE_PRIVATE)
         loadConfigurations()
 
-        updateTimerVisibility()
-
         // Initialize timeLeftInMillis
         timeLeftInMillis = timeLimitSeconds * 1000L
         activityStartTime = System.currentTimeMillis()
 
-        val settingsButton: Button = findViewById(R.id.settings_button)
-        settingsButton.setOnClickListener {
-            val intent = Intent(this, ConfigurationActivity::class.java)
-            startActivity(intent)
-            cameFromSettings = true  // Flag to reset timer when returning
+        // Initialize the ActivityResultLauncher
+        configActivityResultLauncher = registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                // Settings were saved
+                cameFromSettings = true
+                // Optionally, reload configurations
+                loadConfigurations()
+                updateVisibility()
+                resetTimer()
+            } else {
+                // Settings were not saved
+                cameFromSettings = false
+                // No action needed; timer remains as is
+            }
         }
 
+        // Setup Settings Button to launch ConfigurationActivity
+        binding.settingsButton.setOnClickListener {
+            val intent = Intent(this, ConfigurationActivity::class.java)
+            configActivityResultLauncher.launch(intent)
+            // Do not set cameFromSettings here; it will be handled in the callback
+        }
+
+        // Define the Runnable for updating timers
         timerRunnable = object : Runnable {
             override fun run() {
                 // Update Foreground Timer
@@ -79,9 +105,8 @@ class FillInTheBlankActivity : Activity() {
         // Start the timer
         startTimer()
 
-        binding.btnSubmit.setOnClickListener {
-            checkAnswer()
-        }
+        // Setup Submit Button
+        setupSubmitButton()
     }
 
     override fun onResume() {
@@ -91,12 +116,13 @@ class FillInTheBlankActivity : Activity() {
         handler.post(timerRunnable)
 
         loadConfigurations()
-        updateTimerVisibility()
+        updateVisibility()
 
         if (cameFromSettings) {
-            // Reset timer because we came from settings
+            // Reset timer because settings were saved
             resetTimer()
             cameFromSettings = false
+            setupSubmitButton()
         } else {
             // Resume timer without resetting
             startTimer()
@@ -119,8 +145,11 @@ class FillInTheBlankActivity : Activity() {
         handler.removeCallbacks(timerRunnable)
     }
 
+    // ActivityResultLauncher Callback handled above
+
     private fun startTimer(reset: Boolean = false) {
         if (timeLimitSeconds <= 0) {
+            binding.timerRemaining.visibility = android.view.View.GONE
             return  // No timer to run if time limit is zero or negative
         }
 
@@ -130,6 +159,7 @@ class FillInTheBlankActivity : Activity() {
             timeLeftInMillis = timeLimitSeconds * 1000L  // Reset timeLeftInMillis
         }
 
+        binding.timerRemaining.visibility = android.view.View.VISIBLE
         binding.timerRemaining.text = formatTime(timeLeftInMillis)
 
         countDownTimer = object : CountDownTimer(timeLeftInMillis, 1000) {
@@ -150,6 +180,14 @@ class FillInTheBlankActivity : Activity() {
         countDownTimer?.cancel()
         timeLeftInMillis = timeLimitSeconds * 1000L  // Reset timeLeftInMillis
         startTimer(reset = true)
+    }
+
+    private fun setupSubmitButton() {
+        if (buttonTypeImage) {
+            binding.imgBtnSubmit.setOnClickListener { checkAnswer() }
+        } else {
+            binding.btnSubmit.setOnClickListener { checkAnswer() }
+        }
     }
 
     private fun checkAnswer() {
@@ -187,7 +225,7 @@ class FillInTheBlankActivity : Activity() {
         buttonTypeImage = sharedPrefs.getBoolean("buttonTypeImage", false)
     }
 
-    private fun updateTimerVisibility() {
+    private fun updateVisibility() {
         if (timerAEnabled) {
             binding.timerALabel.visibility = android.view.View.VISIBLE
             binding.timerA.visibility = android.view.View.VISIBLE
@@ -202,6 +240,15 @@ class FillInTheBlankActivity : Activity() {
         } else {
             binding.timerBLabel.visibility = android.view.View.GONE
             binding.timerB.visibility = android.view.View.GONE
+        }
+
+        if(buttonTypeImage) {
+            binding.btnSubmit.visibility = android.view.View.GONE
+            binding.imgBtnSubmit.visibility = android.view.View.VISIBLE
+
+        } else {
+            binding.btnSubmit.visibility = android.view.View.VISIBLE
+            binding.imgBtnSubmit.visibility = android.view.View.GONE
         }
     }
 

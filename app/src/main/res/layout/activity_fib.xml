@@ -48,6 +48,14 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
             android:text="@string/submit_answer" />
+
+        <ImageButton
+            android:id="@+id/imgBtnSubmit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="60dp"
+            android:src="@drawable/submit_image" />
     </LinearLayout>
 
 <!-- Foreground Timer Layout -->

@@ -9,9 +9,12 @@ import android.os.Handler
 import android.util.Log
 import android.widget.ArrayAdapter
 import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatActivity
 import com.example.assignment_01.databinding.ActivityMultipleChoiceBinding
 
-class MultipleChoiceActivity : Activity() {
+class MultipleChoiceActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMultipleChoiceBinding
     private var attempts1 = 0
@@ -35,39 +38,65 @@ class MultipleChoiceActivity : Activity() {
     private var timerAEnabled = true
     private var timerBEnabled = true
     private var timeLimitSeconds: Int = 30
+    private var buttonTypeImage: Boolean = false
 
-    private var cameFromSettings = false
+    // Flag to track if settings were saved
+    private var settingsUpdated = false
+
+    // Define the ActivityResultLauncher
+    private lateinit var configActivityResultLauncher: ActivityResultLauncher<Intent>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMultipleChoiceBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Init settings
+        // Initialize SharedPreferences
         sharedPrefs = getSharedPreferences("AppSettings", MODE_PRIVATE)
         loadConfigurations()
 
-        updateTimerVisibility()
+        updateVisibility()
 
         // Restore saved state if available
         if (savedInstanceState != null) {
-            timeLeftInMillis = savedInstanceState.getLong("timeLeftInMillis")
-            activityStartTime = savedInstanceState.getLong("activityStartTime")
-            timeInForeground = savedInstanceState.getLong("timeInForeground")
-            attempts1 = savedInstanceState.getInt("attempts1")
-            attempts2 = savedInstanceState.getInt("attempts2")
-            cameFromSettings = savedInstanceState.getBoolean("cameFromSettings")
+            timeLeftInMillis = savedInstanceState.getLong("timeLeftInMillis", timeLimitSeconds * 1000L)
+            activityStartTime = savedInstanceState.getLong("activityStartTime", System.currentTimeMillis())
+            timeInForeground = savedInstanceState.getLong("timeInForeground", 0L)
+            attempts1 = savedInstanceState.getInt("attempts1", 0)
+            attempts2 = savedInstanceState.getInt("attempts2", 0)
+            settingsUpdated = savedInstanceState.getBoolean("cameFromSettings", false)
+
+            // Restore spinner selections
+            val spinner1Position = savedInstanceState.getInt("spinner1_position", 0)
+            val spinner2Position = savedInstanceState.getInt("spinner2_position", 0)
+            binding.spOptions1.setSelection(spinner1Position)
+            binding.spOptions2.setSelection(spinner2Position)
         } else {
             // Initialize timers if no saved state
             timeLeftInMillis = timeLimitSeconds * 1000L
             activityStartTime = System.currentTimeMillis()
         }
 
+        // Initialize the ActivityResultLauncher
+        configActivityResultLauncher = registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                // Settings were saved
+                settingsUpdated = true
+                loadConfigurations()
+                updateVisibility()
+            } else {
+                // Settings were not saved
+                settingsUpdated = false
+                // No action needed; timer remains as is
+            }
+        }
+
         // Settings Button
         binding.settingsButton.setOnClickListener {
             val intent = Intent(this, ConfigurationActivity::class.java)
-            startActivity(intent)
-            cameFromSettings = true
+            configActivityResultLauncher.launch(intent)
         }
 
         // Initialize spinners with options from strings.xml
@@ -80,6 +109,7 @@ class MultipleChoiceActivity : Activity() {
         adapter2.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         binding.spOptions2.adapter = adapter2
 
+        // Define the Runnable for updating timers
         timerRunnable = object : Runnable {
             override fun run() {
                 // Update Foreground Timer
@@ -96,7 +126,7 @@ class MultipleChoiceActivity : Activity() {
                     binding.timerB.text = formatTime(elapsedTotal)
                 }
 
-                // next update after a second
+                // Next update after a second
                 handler.postDelayed(this, 1000)
             }
         }
@@ -115,12 +145,15 @@ class MultipleChoiceActivity : Activity() {
         handler.post(timerRunnable)
 
         loadConfigurations()
-        updateTimerVisibility()
+        updateVisibility()
 
-        if (cameFromSettings) {
+        if (settingsUpdated) {
+            // Reset timer because settings were saved
             resetTimer()
-            cameFromSettings = false
+            settingsUpdated = false
+            setupSubmitButton()
         } else {
+            // Resume timer without resetting
             startTimer()
         }
     }
@@ -134,7 +167,6 @@ class MultipleChoiceActivity : Activity() {
         handler.removeCallbacks(timerRunnable)
 
         countDownTimer?.cancel()
-
     }
 
     override fun onDestroy() {
@@ -150,16 +182,21 @@ class MultipleChoiceActivity : Activity() {
         outState.putLong("timeInForeground", timeInForeground)
         outState.putInt("attempts1", attempts1)
         outState.putInt("attempts2", attempts2)
-        outState.putBoolean("cameFromSettings", cameFromSettings)
+        outState.putBoolean("cameFromSettings", settingsUpdated)
+
+        // Save spinner selections
+        outState.putInt("spinner1_position", binding.spOptions1.selectedItemPosition)
+        outState.putInt("spinner2_position", binding.spOptions2.selectedItemPosition)
     }
 
     private fun loadConfigurations() {
         timerAEnabled = sharedPrefs.getBoolean("timerAEnabled", true)
         timerBEnabled = sharedPrefs.getBoolean("timerBEnabled", true)
         timeLimitSeconds = sharedPrefs.getInt("timeLimitSeconds", 30)
+        buttonTypeImage = sharedPrefs.getBoolean("buttonTypeImage", false)
     }
 
-    private fun updateTimerVisibility() {
+    private fun updateVisibility() {
         if (timerAEnabled) {
             binding.timerALabel.visibility = android.view.View.VISIBLE
             binding.timerA.visibility = android.view.View.VISIBLE
@@ -175,13 +212,29 @@ class MultipleChoiceActivity : Activity() {
             binding.timerBLabel.visibility = android.view.View.GONE
             binding.timerB.visibility = android.view.View.GONE
         }
+
+        if(buttonTypeImage) {
+            binding.btnSubmit.visibility = android.view.View.GONE
+            binding.imgBtnSubmit.visibility = android.view.View.VISIBLE
+
+        } else {
+            binding.btnSubmit.visibility = android.view.View.VISIBLE
+            binding.imgBtnSubmit.visibility = android.view.View.GONE
+        }
     }
 
     private fun startTimer(reset: Boolean = false) {
+        if (timeLimitSeconds <= 0) {
+            binding.timerRemaining.visibility = android.view.View.GONE
+            return  // No timer to run if time limit is zero or negative
+        }
+
         countDownTimer?.cancel()
         if (reset) {
             timeLeftInMillis = timeLimitSeconds * 1000L
         }
+
+        binding.timerRemaining.visibility = android.view.View.VISIBLE
         binding.timerRemaining.text = formatTime(timeLeftInMillis)
 
         countDownTimer = object : CountDownTimer(timeLeftInMillis, 1000) {
@@ -200,43 +253,48 @@ class MultipleChoiceActivity : Activity() {
 
     private fun resetTimer() {
         countDownTimer?.cancel()
+        timeLeftInMillis = timeLimitSeconds * 1000L  // Reset timeLeftInMillis
         startTimer(reset = true)
     }
 
     private fun setupSubmitButton() {
-        binding.btnSubmit.setOnClickListener {
+        if (buttonTypeImage) {
+            binding.imgBtnSubmit.setOnClickListener { handleSubmitAction() }
+        } else {
+            binding.btnSubmit.setOnClickListener { handleSubmitAction() }
+        }
+    }
 
-            val selected1 = binding.spOptions1.selectedItem.toString()
-            val selected2 = binding.spOptions2.selectedItem.toString()
+    private fun handleSubmitAction() {
+        val selected1 = binding.spOptions1.selectedItem.toString()
+        val selected2 = binding.spOptions2.selectedItem.toString()
 
-            var allCorrect = true
+        var allCorrect = true
 
-            if (selected1 != correctAnswer1) {
-                attempts1++
-                allCorrect = false
-                if (attempts1 >= maxAttempts1) {
-                    navigateToResult(false)
-                    return@setOnClickListener
-                } else {
-                    Toast.makeText(this, "Question 1 Incorrect. Try again.", Toast.LENGTH_SHORT).show()
-                }
+        if (selected1 != correctAnswer1) {
+            attempts1++
+            allCorrect = false
+            if (attempts1 >= maxAttempts1) {
+                navigateToResult(false)
+                return
+            } else {
+                Toast.makeText(this, "Question 1 Incorrect. Try again.", Toast.LENGTH_SHORT).show()
             }
+        }
 
-            if (selected2 != correctAnswer2) {
-                attempts2++
-                allCorrect = false
-                if (attempts2 >= maxAttempts2) {
-                    navigateToResult(false)
-                    return@setOnClickListener
-                } else {
-                    Toast.makeText(this, "Question 2 Incorrect. Try again.", Toast.LENGTH_SHORT).show()
-                }
+        if (selected2 != correctAnswer2) {
+            attempts2++
+            allCorrect = false
+            if (attempts2 >= maxAttempts2) {
+                navigateToResult(false)
+                return
+            } else {
+                Toast.makeText(this, "Question 2 Incorrect. Try again.", Toast.LENGTH_SHORT).show()
             }
+        }
 
-            if (allCorrect) {
-                navigateToFillInBlank()
-            }
-            // Timer continues without resetting
+        if (allCorrect) {
+            navigateToFillInBlank()
         }
     }
 
